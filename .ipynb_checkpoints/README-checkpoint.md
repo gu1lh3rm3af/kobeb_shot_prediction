@@ -48,7 +48,6 @@ Dividiremos p notebook nas seguintes etapas:
 * Treinamentos dos modelos
 * Aprovação do modelo
 * Operacionalização
-* Monitoramento
 
 Para registro do modelo e das ações durante o experimento, utilizaremos o MLFlow.
 O MLFLow possibilita o registro das rodadas através de **runs** que registram informações importantes como horaício, duração, usuário de executou, as fontes de dados e principalmente, os parâmetros, métricas e artefatos resultantes daquela execução.
@@ -70,4 +69,117 @@ Para simplificação do problema, utilizaremos apenas 6 features:
 
 E por fim dividiremos o dataset em dois, onde todos os registros correspondentes ao arremessos de 2 pontos serão utilizados no treinamento do modelo, e o registros correspondentes a arremessos de 3 pontos serão utilizados para simulador dados de operação, quando o modelo estiver em produção.
 
-O run referente a esta etapa terá o nome de *PreparacaoDados* e registrará com parâmetros as features consideradas, já mencionadas acima, como métricas teremos o tamanho de cada dataset, considerando treino, teste e novidade, e porcentagem reservada para o dataset de teste.
+O run referente a esta etapa terá o nome de *PreparacaoDados* e registrará como parâmetros as features consideradas e a porcentagem reservada para o dataset de teste e como métricas teremos o tamanho de cada dataset, considerando treino, teste e novidade.
+
+Para a separação dos datasets, passaremos o parâmetro *stratify=Y*, isso garantirá que a divisão manterá as proporções das classes entre os dois datasets, e ajudará a reduzir o efeito de viés de dados no modelo.
+
+Feita a execução dentro do Run, todo o registro é gravado no MLFlow.
+
+<kbd>
+  <img src="Data/images/run_prepdados.PNG">
+</kbd>
+
+Na figura acima podemos observar na faixa esquerda, o experimento criado com o nome *kobeb_shot_prediction* e no centro os runs executado até então, com informações básicas da execução. Se clicarmos no da linha referente ao run, podemos vizualizar todos os registros coletados pelo MLFlow:
+
+<kbd>
+  <img src="Data/images/run_prepdados_det.PNG">
+</kbd>
+
+Temos registrados os parâmetros e métricas citados anteriormente, não há artefatos nesta execução.
+
+Esta execução gerou dois arquivos parquet, data_train.parquet e data_test.parquet, e estes foram salvou na pasta do projeto.
+
+## Treinamentos dos modelos
+
+Para iniciar o treinamento, faremos a leitura dos arquivos gerados na execução anterior. O desenvolvimento está sendo feito em apenas um notebook, porém estamos simulando um ambiente de produção, onde uma ferramenta de pipeline estaria executando os códigos, e estes poderiam estar divididos em diversos notebooks, ou arquivos .py.
+
+Nesta etapa, começaremos a utilizar a biblioteca pyCaret para desenvolvimento do modelo.
+Iniciaremos com o setup, onde toda a parametrização do modelo é feita. Alguns parametros que devemos destacar:
+
+* test_data: Este parametro especifica o dataset de teste a ser utilizado. Como fizemos a divisão na etapa anterior, utilizaremos o dataset de teste já criado. Este paramentro anula  o test_size, caso ele seja utilizado.
+
+* log_experiment,log_plots, experiment_name: Aqui estaremos garantindo que o MLFlow fará os registros do experimento e dos plots em sua base.
+
+* fold_strategy: Neste parâmetro definimos a estratégia de Kfold. Como estamos trabalhando num problema de classificação, a estratégia estratificada é a maior indicada, pois ela garantirá que a proporção das classes será mantida em cada fold.
+
+* silent: Como estamos simulando um ambiente de produção, onde a execução será automática, o silent ocultará o prompt de confirmação.
+
+Além das métricas padrões do pyCaret.classification adicionaremos a métrica logloss em nosso modelos.
+
+Feita a execução, todos os registros são gravados no MLFlow e é gerado um arquivo .pkl com o pipeline referente a este setup. Todos os parametros do setup também foram registrados:
+
+<kbd>
+  <img src="Data/images/run_setup.PNG">
+</kbd>
+
+Nos dois runs seguintes, serão executados os treinamentos. Os modelos utilizados serão a Regressão Logística, e o segundo modelos será selecionado pelo método do pyCaret *compare_models*, que fará a comparação entre a árvore de decisão e o SVM, e escolherá o que obtiver o melhor f1 score. Neste caso, o selecionado foi a árvore de decisão.
+
+Será executado um run para cada modelo, porém os registros efetuados serão iguais, probability_threshold e cross_validation como parâmetros, todas as métricas padrões de classificão do sklearn + o logloss e os plots.
+
+<kbd>
+  <img src="Data/images/run_lr.PNG">
+</kbd>
+
+Neste run todos os plots ficam salvos como artefatos, e disponíveis para consulta, assim como o próprio modelo, os requerimentos e etc.
+
+## Aprovação do modelo
+
+Nesta etapa, simularemos um run de aprovação do modelo, onde o objetivo é garantir que o novo modelo só subirá para o Staging se atingir uma precisão mínima.  
+
+Com a precisão atingida, o MLFlow registrará o pipeline de modelagem com uma nova versão e colocará no ambiente de staging.
+
+<kbd>
+  <img src="Data/images/reg_model.PNG">
+</kbd>
+
+## Operacionalização
+
+Para testar a aderência do modelo a uma nova base de dados totalmente desconhecida e com padrões de dados diferentes, utilizaremos a chamado ao método POST invocations da API do MLFlow, utilizando a biblioteca requests para montar a requisição.
+
+Como resultado o método devolve a predição da variável alvo, e assim podemos comparar com a base original e validar a aderência:
+
+<kbd>
+  <img src="Data/images/class_report.PNG">
+</kbd>
+
+Apesar de do f1 score alto, o modelo não foi aderente a dados de características diferentes, neste caso arremessos de 3pt, pois considerou todos os arremessos como erros, e nenhuma cesta. 
+
+### Monitoramentos e Alarmes
+
+Com o modelo em produção, devemos nos preocupar com a saúde do mesmo e garantir que saberemos o momento certo de uma reavaliação e/ou retreinamento. Algumas estratégias ajudam neste momento.
+
+Em sistemas com disponibilidade da variável de resposta em produção, podemos utilizar a flutuação dos dados de teste ou a resposta da validação cruzada para determinar o momento certo para o retreinamento.
+
+<kbd>
+  <img src="Data/images/retreino_com_resp.PNG">
+</kbd>
+
+Em sistemas sem disponibilidade da variável de resposta em produção, podemos monitorar a distribuição das 
+variáveis de entrada e saída com médias, desvios 
+padrões e divergências. Aqui também podemos utilizar amostras out-of-time para referência e para evulução de métricas em produção.
+
+<kbd>
+  <img src="Data/images/retreino_sem_resp.PNG">
+</kbd>
+
+Para o retreinamento temos estratégias distintas que pode ser utilizadas, reativa e preditiva. Deve levar em conta a qualidade dos dados, a aplicação, a disponibilidade dos dados. 
+
+* Estratégia Reativa: o modelo é retreinado quando a métrica de desempanho escolhida atingir um valor inferior ao valor nominal do modelo.
+
+* Estratégia Preditiva: o modelo é retreinado quando é observado desvio de dados e conceitos, antevendo possíveis quedas de desempenho.
+
+### Dashboard de monitoramento
+
+Para monitorar a operação do nosso modelo, criamos um dashboard utilizando a ferramento Streamlit. 
+
+<kbd>
+  <img src="Data/images/dash.PNG">
+</kbd>
+
+<kbd>
+  <img src="Data/images/dash2.PNG">
+</kbd>
+
+<kbd>
+  <img src="Data/images/dash3.PNG">
+</kbd>
