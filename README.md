@@ -1,4 +1,3 @@
-
 # Kobe Bryant - Análise Preditiva de Acertos
 ------------
 O objetivo deste projeto é contruir um preditor capaz de prever se o astro do basket Kobe Bryant acertou ou errou a cesta, analisando um dataset com registros completos dos seus arremessos, com atributos como latitude e longitute na quadra, tipo de arremesso, tempo faltante, entre outros.
@@ -41,15 +40,6 @@ Com o MLFlow, faremos o controle do nosso modelo entre os pipelines de desenvolv
 
 ## Descrição das Etapas
 
-A base de dados utilizadas possui 25 features, neste projeto serão utilizadas as seguintes features: 
-
-* lat
-* lng
-* minutes remaining
-* period
-* playoffs
-* shot_distance
-
 No notebook, simularemos as etapas do projeto de ponta a ponta.
 
 Dividiremos p notebook nas seguintes etapas:
@@ -61,6 +51,23 @@ Dividiremos p notebook nas seguintes etapas:
 * Monitoramento
 
 Para registro do modelo e das ações durante o experimento, utilizaremos o MLFlow.
-O MLFLow possibilita o registro das rodadas através de *runs* que registram informações importantes como horaício, duração, usuário de executou, as fontes de dados e principalmente, os parâmetros, métricas e artefatos resultantes daquela execução.
+O MLFLow possibilita o registro das rodadas através de **runs** que registram informações importantes como horaício, duração, usuário de executou, as fontes de dados e principalmente, os parâmetros, métricas e artefatos resultantes daquela execução.
 
 Falaremos um pouco de cada uma das etapas com mais detalhes a seguir.
+
+## Preparação dos dados
+
+Nosso dataset original possui 30697 registros com 25 colunas. Para este projetos desconsideraremos os missing values, o que resultará num dataset de 25697 registros.
+
+Para simplificação do problema, utilizaremos apenas 6 features:
+
+* lat
+* lon
+* minutes remaining
+* period
+* playoffs
+* shot_distance
+
+E por fim dividiremos o dataset em dois, onde todos os registros correspondentes ao arremessos de 2 pontos serão utilizados no treinamento do modelo, e o registros correspondentes a arremessos de 3 pontos serão utilizados para simulador dados de operação, quando o modelo estiver em produção.
+
+O run referente a esta etapa terá o nome de *PreparacaoDados* e registrará com parâmetros as features consideradas, já mencionadas acima, como métricas teremos o tamanho de cada dataset, considerando treino, teste e novidade, e porcentagem reservada para o dataset de teste.
