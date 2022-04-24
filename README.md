@@ -1,3 +1,4 @@
+
 # Kobe Bryant - Análise Preditiva de Acertos
 ------------
 O objetivo deste projeto é contruir um preditor capaz de prever se o astro do basket Kobe Bryant acertou ou errou a cesta, analisando um dataset com registros completos dos seus arremessos, com atributos como latitude e longitute na quadra, tipo de arremesso, tempo faltante, entre outros.
@@ -37,3 +38,29 @@ Com o MLFlow, faremos o controle do nosso modelo entre os pipelines de desenvolv
 * Apresentação do resultado para usuário final de forma a disponibilizar insumos para análises e tomadas de decisão
 * Retreinamento dos modelos em produção para recalibração dos parâmetro.
 * Segurança nas manutenções, mitigando o risco de quebra da aplicação em produção.
+
+## Descrição das Etapas
+
+A base de dados utilizadas possui 25 features, neste projeto serão utilizadas as seguintes features: 
+
+* lat
+* lng
+* minutes remaining
+* period
+* playoffs
+* shot_distance
+
+No notebook, simularemos as etapas do projeto de ponta a ponta.
+
+Dividiremos p notebook nas seguintes etapas:
+
+* Preparação dos dados
+* Treinamentos dos modelos
+* Aprovação do modelo
+* Operacionalização
+* Monitoramento
+
+Para registro do modelo e das ações durante o experimento, utilizaremos o MLFlow.
+O MLFLow possibilita o registro das rodadas através de *runs* que registram informações importantes como horaício, duração, usuário de executou, as fontes de dados e principalmente, os parâmetros, métricas e artefatos resultantes daquela execução.
+
+Falaremos um pouco de cada uma das etapas com mais detalhes a seguir.
