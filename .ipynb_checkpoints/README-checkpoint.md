@@ -71,5 +71,3 @@ Para simplificação do problema, utilizaremos apenas 6 features:
 E por fim dividiremos o dataset em dois, onde todos os registros correspondentes ao arremessos de 2 pontos serão utilizados no treinamento do modelo, e o registros correspondentes a arremessos de 3 pontos serão utilizados para simulador dados de operação, quando o modelo estiver em produção.
 
 O run referente a esta etapa terá o nome de *PreparacaoDados* e registrará com parâmetros as features consideradas, já mencionadas acima, como métricas teremos o tamanho de cada dataset, considerando treino, teste e novidade, e porcentagem reservada para o dataset de teste.
-
-![](..\Data\images/run_prepdados.PNG)
