@@ -170,7 +170,9 @@ Para o retreinamento temos estratégias distintas que pode ser utilizadas, reati
 
 ### Dashboard de monitoramento
 
-Para monitorar a operação do nosso modelo, criamos um dashboard utilizando a ferramento Streamlit. 
+Para monitorar a operação do nosso modelo, criamos um dashboard utilizando a ferramento Streamlit.
+
+Arquivo: **dashboard_monitoramento.py**
 
 <kbd>
   <img src="Data/images/dash.PNG">
